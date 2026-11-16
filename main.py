@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from src.channel import awgn
+from src.channel import awgn, burst_noise
 from src.decoding import bits_to_received_text, receive
 from src.line_coding import manchester_encode, nrz_encode
 from src.message import text_to_bits
@@ -38,6 +38,7 @@ def run() -> None:
     message = input("Mensagem ASCII: ")
     line_code = _choose("Codificação de linha:", ("NRZ", "Manchester"))
     modulation = _choose("Modulação:", ("BPSK", "QPSK", "16-QAM"))
+    channel = _choose("Canal:", ("AWGN", "Ruído em rajadas"))
     snr_db = _snr()
     seed_text = input("Seed (vazio para aleatória): ").strip()
     seed = int(seed_text) if seed_text else None
@@ -46,7 +47,10 @@ def run() -> None:
     levels = nrz_encode(bits) if line_code == "NRZ" else manchester_encode(bits)
     chip_bits = (levels > 0).astype(np.uint8)
     symbols = modulate(chip_bits, modulation)
-    received_symbols = awgn(symbols, snr_db, seed)
+    if channel == "AWGN":
+        received_symbols = awgn(symbols, snr_db, seed)
+    else:
+        received_symbols = burst_noise(symbols, snr_db, seed=seed)
     received_bits = receive(received_symbols, line_code, modulation, chip_bits.size)
     metrics = bit_metrics(bits, received_bits)
 
@@ -55,6 +59,7 @@ def run() -> None:
     print(f"Recebida: {bits_to_received_text(received_bits)}")
     print(f"Bits transmitidos: {metrics['total_bits']}")
     print(f"Bits incorretos: {metrics['incorrect_bits']}")
+    print(f"Índices dos bits incorretos (base 0): {metrics['incorrect_positions']}")
     print(f"BER: {metrics['ber']:.6f}")
 
 

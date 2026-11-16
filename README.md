@@ -9,7 +9,7 @@ O fluxo implementado é:
    no Manchester há dois níveis por bit (`0 -> +1,-1` e `1 -> -1,+1`).
 3. Cada nível é representado por um *chip bit* (`-1 -> 0`, `+1 -> 1`).
    Esses bits são agrupados e modulados em símbolos complexos.
-4. O canal adiciona ruído AWGN aos símbolos modulados.
+4. O canal adiciona AWGN ou AWGN com ruído em rajadas aos símbolos modulados.
 5. O receptor demodula, remove o preenchimento final usado para completar o
    último símbolo, reconstrói os níveis e decodifica a linha.
 
@@ -17,6 +17,18 @@ Esse desenho evita tratar uma forma de onda de linha como se fosse diretamente
 um símbolo QPSK/QAM. A codificação de linha continua sendo observável e
 testável, enquanto a modulação trabalha sobre uma sequência binária bem
 definida.
+
+### Codificação de linha x correção de erros
+
+Codificação de linha define como os bits são representados fisicamente no
+enlace, por exemplo, com os níveis e transições usados por NRZ e Manchester.
+Ela pode melhorar propriedades do sinal, como sincronização, mas não adiciona
+redundância para recuperar bits corrompidos.
+
+Codificação de correção de erros adiciona bits redundantes à mensagem para que
+o receptor detecte e, conforme o código utilizado, corrija erros causados pelo
+canal. Este simulador implementa codificação de linha, mas ainda não implementa
+um código de correção de erros.
 
 As constelações são normalizadas para potência média unitária: BPSK usa
 `±1`, QPSK usa `(±1 ± j)/sqrt(2)` e 16-QAM usa amplitudes
@@ -33,8 +45,18 @@ pip install -r requirements.txt
 python main.py
 ```
 
-O valor de seed é opcional e torna a transmissão reproduzível. Esta fase não
-inclui experimentos, varreduras de SNR, estatística agregada ou gráficos.
+O valor de seed é opcional e torna a transmissão reproduzível. O resultado
+também informa os índices dos bits incorretos, usando indexação iniciada em
+zero. Esta fase não inclui experimentos, varreduras de SNR, estatística
+agregada ou gráficos.
+
+### Cenários de canal
+
+O cenário AWGN adiciona ruído gaussiano complexo com potência definida pela
+SNR informada. O cenário `Ruído em rajadas` mantém esse ruído de fundo e
+adiciona ruído de potência configurada em intervalos consecutivos. Cada amostra
+inicia uma rajada com probabilidade de 1%, cada rajada dura até 8 amostras e
+tem SNR de 0 dB. A mesma seed torna os resultados reproduzíveis.
 
 ## Testes
 

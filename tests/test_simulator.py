@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.channel import awgn
+from src.channel import awgn, burst_noise
 from src.decoding import receive
 from src.line_coding import manchester_decode, manchester_encode, nrz_decode, nrz_encode
 from src.message import bits_to_text, text_to_bits
@@ -56,7 +56,26 @@ def test_awgn_is_reproducible_and_changes_signal():
     assert not np.array_equal(first, signal)
 
 
+def test_burst_noise_is_reproducible_and_changes_signal():
+    signal = np.ones(1000, dtype=complex)
+    first = burst_noise(signal, 10, burst_probability=0.1, burst_length=4, seed=7)
+    second = burst_noise(signal, 10, burst_probability=0.1, burst_length=4, seed=7)
+    assert np.array_equal(first, second)
+    assert not np.array_equal(first, signal)
+
+
+def test_burst_noise_rejects_invalid_parameters():
+    signal = np.ones(4, dtype=complex)
+    with pytest.raises(ValueError):
+        burst_noise(signal, 10, burst_probability=1.1)
+    with pytest.raises(ValueError):
+        burst_noise(signal, 10, burst_length=0)
+
+
 def test_metrics():
     assert bit_metrics(np.array([0, 1, 1]), np.array([0, 0, 1])) == {
-        "total_bits": 3, "incorrect_bits": 1, "ber": pytest.approx(1 / 3)
+        "total_bits": 3,
+        "incorrect_bits": 1,
+        "incorrect_positions": [1],
+        "ber": pytest.approx(1 / 3),
     }
