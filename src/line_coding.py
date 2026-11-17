@@ -29,15 +29,20 @@ def manchester_encode(bits: np.ndarray) -> np.ndarray:
     levels = np.where(values[:, None] == 0, [1.0, -1.0], [-1.0, 1.0])
     return levels.reshape(-1)
 
+def manchester_violations(levels: np.ndarray) -> int:
+    """Count Manchester pairs without a mid-bit transition (equal levels)."""
+    values = np.asarray(levels).reshape(-1)
+    if values.size % 2:
+        raise ValueError("A sequência Manchester deve ter número par de níveis.")
+    signs = values.reshape(-1, 2) >= 0
+    return int(np.count_nonzero(signs[:, 0] == signs[:, 1]))
 
-def manchester_decode(levels: np.ndarray) -> np.ndarray:
+def manchester_decode(levels: np.ndarray, strict: bool = False) -> np.ndarray:
     """Decode Manchester pairs, rejecting invalid equal-level pairs."""
     values = np.asarray(levels).reshape(-1)
     if values.size % 2:
         raise ValueError("A sequência Manchester deve ter número par de níveis.")
-    pairs = values.reshape(-1, 2)
-    signs = pairs >= 0
-    valid = np.logical_xor(signs[:, 0], signs[:, 1])
-    if not np.all(valid):
+    if strict and manchester_violations(values):
         raise ValueError("Níveis inválidos para Manchester: transição ausente.")
-    return (~signs[:, 0]).astype(np.uint8)
+    first_positive = values.reshape(-1, 2)[:, 0] >= 0
+    return first_positive.astype(np.uint8) ^ 1

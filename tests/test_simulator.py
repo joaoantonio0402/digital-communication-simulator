@@ -79,3 +79,40 @@ def test_metrics():
         "incorrect_positions": [1],
         "ber": pytest.approx(1 / 3),
     }
+
+def test_manchester_decode_tolerates_invalid_pairs():
+    from src.line_coding import manchester_violations
+
+    # 2o par (+1,+1) e 3o par (-1,-1) não têm transição no meio do bit.
+    levels = np.array([1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0, 1.0])
+    assert manchester_violations(levels) == 2
+    assert np.array_equal(manchester_decode(levels), np.array([0, 0, 1, 1], dtype=np.uint8))
+    with pytest.raises(ValueError):
+        manchester_decode(levels, strict=True)
+
+
+def test_manchester_noisy_channel_does_not_crash():
+    bits = text_to_bits("Teste de Manchester com ruido")
+    chips = (manchester_encode(bits) > 0).astype(np.uint8)
+    received = awgn(qpsk_modulate(chips), 0, seed=3)
+    recovered = receive(received, "Manchester", "QPSK", chips.size)
+    assert recovered.size == bits.size
+
+def test_spectral_efficiency_table():
+    from src.link import spectral_efficiency
+
+    esperado = {
+        ("NRZ", "BPSK"): 1, ("NRZ", "QPSK"): 2, ("NRZ", "16-QAM"): 4,
+        ("Manchester", "BPSK"): 0.5, ("Manchester", "QPSK"): 1, ("Manchester", "16-QAM"): 2,
+    }
+    for (linha, mod), valor in esperado.items():
+        assert spectral_efficiency(linha, mod) == pytest.approx(valor)
+
+
+def test_ebn0_snr_conversion_round_trip():
+    from src.link import ebn0_to_snr_db, snr_to_ebn0_db
+
+    assert ebn0_to_snr_db(6, "NRZ", "BPSK") == pytest.approx(6)
+    assert ebn0_to_snr_db(6, "NRZ", "QPSK") == pytest.approx(6 + 3.0103, abs=1e-3)
+    assert ebn0_to_snr_db(6, "Manchester", "BPSK") == pytest.approx(6 - 3.0103, abs=1e-3)
+    assert snr_to_ebn0_db(ebn0_to_snr_db(8, "NRZ", "16-QAM"), "NRZ", "16-QAM") == pytest.approx(8)
