@@ -1,0 +1,37 @@
+{
+  "ebn0_db": [
+    0,
+    2,
+    4,
+    6,
+    8,
+    10,
+    12,
+    14,
+    16
+  ],
+  "n_bits": 100000,
+  "n_reps": 5,
+  "base_seed": 2026,
+  "line_codes": [
+    "NRZ",
+    "Manchester"
+  ],
+  "modulations": [
+    "BPSK",
+    "QPSK",
+    "16-QAM"
+  ],
+  "channels": [
+    "AWGN",
+    "Rajadas"
+  ],
+  "burst": {
+    "burst_probability": 0.01,
+    "burst_length": 8,
+    "burst_snr_db": 0.0
+  },
+  "numpy": "2.5.4",
+  "python": "3.14.0",
+  "seconds": 13.2
+}

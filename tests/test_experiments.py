@@ -2,7 +2,8 @@ import csv
 
 import numpy as np
 
-import experiments
+from src import experiments
+from src.plot_results import generate_plots, load_summary
 
 
 def test_experiments_shape_and_reproducibility():
@@ -30,3 +31,13 @@ def test_summary_and_csv(tmp_path):
     experiments.write_csv(path, rows, experiments.RAW_FIELDS)
     with path.open(encoding="utf-8") as handle:
         assert len(list(csv.DictReader(handle))) == len(rows)
+
+
+def test_plot_generation(tmp_path):
+    rows = experiments.run_experiments(800, 3, [4])
+    summary_path = tmp_path / "summary.csv"
+    experiments.write_csv(summary_path, experiments.summarize(rows))
+    assert len(load_summary(summary_path)) == 12
+    plots = generate_plots(summary_path, tmp_path / "plots")
+    assert len(plots) == 4
+    assert all(path.is_file() and path.stat().st_size > 0 for path in plots)

@@ -7,10 +7,16 @@ import csv
 import json
 import math
 import platform
+import sys
 import time
 from pathlib import Path
 
 import numpy as np
+
+# Allow `python src/experiments.py` as well as `python -m src.experiments`.
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.channel import awgn, burst_noise
 from src.decoding import decode_line
