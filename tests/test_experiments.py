@@ -41,3 +41,45 @@ def test_plot_generation(tmp_path):
     plots = generate_plots(summary_path, tmp_path / "plots")
     assert len(plots) == 4
     assert all(path.is_file() and path.stat().st_size > 0 for path in plots)
+
+def test_theory_matches_simulation():
+    import math
+
+    import pytest
+
+    from src.link import ber_theory, q_function
+
+    expected = q_function(math.sqrt(2 * 10 ** 0.6))
+    assert ber_theory("NRZ", "BPSK", 6) == pytest.approx(expected)
+    assert ber_theory("NRZ", "16-QAM", 6) == pytest.approx(0.0279, abs=5e-4)
+    rows = experiments.run_experiments(100_000, 1, [6])
+    for r in rows:
+        if r["channel"] == "AWGN":
+            theory = ber_theory(r["line_code"], r["modulation"], r["ebn0_db"])
+            assert r["ber"] == pytest.approx(theory, rel=0.15), (r["line_code"], r["modulation"])
+
+
+def test_consistency_message_recovered_when_ideal_or_high_snr():
+    from src.analysis import DEFAULT_MESSAGE, build_consistency_report, transmit
+
+    for line in ("NRZ", "Manchester"):
+        for mod in ("BPSK", "QPSK", "16-QAM"):
+            assert transmit(DEFAULT_MESSAGE, line, mod, None, None, 1)["ok"]
+            assert transmit(DEFAULT_MESSAGE, line, mod, "AWGN", 30.0, 1)["ok"]
+    report = build_consistency_report(DEFAULT_MESSAGE, 2026)
+    assert "Canal ideal" in report and "NÃO" in report
+
+
+def test_analysis_outputs(tmp_path):
+    import pytest
+
+    from src import analysis
+
+    rows = experiments.run_experiments(800, 3, list(experiments.EBN0_DB))
+    summary = tmp_path / "summary.csv"
+    experiments.write_csv(summary, experiments.summarize(rows))
+    outputs = analysis.run_all(summary, tmp_path / "plots", tmp_path)
+    assert len(outputs) == 7
+    assert all(p.is_file() and p.stat().st_size > 0 for p in outputs)
+    x, y = np.array([0.0, 2.0, 4.0]), np.array([1e-1, 1e-3, 1e-5])
+    assert analysis.ebn0_for_ber(x, y, 1e-2, 1e-6) == pytest.approx(1.0)

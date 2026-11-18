@@ -40,3 +40,20 @@ def ebn0_to_snr_db(ebn0_db: float, line_code: str, modulation: str) -> float:
 def snr_to_ebn0_db(snr_db: float, line_code: str, modulation: str) -> float:
     """Inverse of ``ebn0_to_snr_db``."""
     return snr_db - 10.0 * math.log10(info_bits_per_symbol(line_code, modulation))
+
+def q_function(x: float) -> float:
+    return 0.5 * math.erfc(x / math.sqrt(2.0))
+
+
+def ber_theory(line_code: str, modulation: str, ebn0_db: float) -> float:
+    gamma = 10.0 ** (ebn0_to_snr_db(ebn0_db, line_code, modulation) / 10.0)
+    if modulation == "BPSK":
+        return q_function(math.sqrt(2.0 * gamma))
+    if modulation == "QPSK":
+        return q_function(math.sqrt(gamma))
+    if modulation == "16-QAM":
+        a = math.sqrt(gamma / 5.0)
+        if line_code == "Manchester":
+            return 0.5 * (q_function(a) + q_function(3.0 * a))
+        return 0.25 * (3.0 * q_function(a) + 2.0 * q_function(3.0 * a) - q_function(5.0 * a))
+    raise ValueError(f"Modulação desconhecida: {modulation}")
