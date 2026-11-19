@@ -1,4 +1,12 @@
 import csv
+import sys
+from pathlib import Path
+
+# Allow `python src/experiments.py` as well as `python -m src.experiments`.
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 
 import numpy as np
 

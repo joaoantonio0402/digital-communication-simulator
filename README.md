@@ -54,6 +54,24 @@ dividida igualmente entre as partes real e imaginária.
 - Gustavo Ribeiro Schwert
 - João Antonio Astolfi Gonçalves
 
+### Divisão de responsabilidades
+
+A divisão abaixo foi consolidada a partir dos commits do repositório, com
+integração e revisão conjunta da entrega:
+
+- **João Antonio Astolfi Gonçalves**: implementação inicial do simulador
+  ponta a ponta (`main.py` e módulos de mensagem, codificação de linha,
+  modulação, canal, demodulação, decodificação e métricas); inclusão do canal
+  com ruído em rajadas e respectivos testes; organização inicial do projeto e
+  da documentação.
+- **Gustavo Ribeiro Schwert**: implementação do plano experimental e dos
+  testes de experimentos; cálculo de eficiência espectral e conversão de
+  SNR; correções relacionadas ao Manchester; análise teórica, comparação
+  AWGN × rajadas, teste de consistência, gráficos complementares, tabela de
+  compromisso e atualização dos resultados e do README.
+- **Ambos**: definição dos cenários e parâmetros, interpretação dos
+  resultados, preparação da apresentação e validação final.
+
 ## Execução do simulador interativo
 
 ```text
